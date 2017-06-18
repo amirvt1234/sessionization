@@ -75,12 +75,12 @@ public class Windows {
 			MASTERIP  = (String) jsonObject.get("MASTER_IP");
 			TOPIC     = (String) jsonObject.get("TOPIC");
 		} catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
 
 
 
