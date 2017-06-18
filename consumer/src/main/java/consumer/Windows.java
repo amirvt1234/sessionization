@@ -1,6 +1,5 @@
 package consumer;
 
-
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.windowing.WindowFunction;
@@ -21,47 +20,60 @@ import org.apache.flink.streaming.api.functions.TimestampExtractor;
 import org.apache.flink.streaming.api.functions.timestamps.AscendingTimestampExtractor;
 import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.streaming.api.watermark.Watermark;
-
-
 import org.apache.flink.streaming.api.datastream.SplitStream;
 import org.apache.flink.streaming.api.collector.selector.OutputSelector;
-
 import org.apache.flink.streaming.connectors.redis.RedisSink;
 import org.apache.flink.streaming.connectors.redis.common.config.FlinkJedisPoolConfig;
-
-//import org.apache.flink.api.java.tuple.Tuple7;
-
-
-//import wikiedits.Mappers.*;
 import org.apache.flink.streaming.connectors.redis.common.mapper.RedisCommand;
 import org.apache.flink.streaming.connectors.redis.common.mapper.RedisCommandDescription;
 import org.apache.flink.streaming.connectors.redis.common.mapper.RedisMapper;
-
-
-
-
+import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.Config;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.Iterator;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 public class Windows {
 
-
-
-
-
     public static void main(String[] args) throws Exception {
 
+		// Set up the flink streaming environment
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
+		// Reading configureations
+		// Not sure if this is the best way to read the data into Java; check it later
+		JSONParser parser = new JSONParser();
+		String WORKERSIP="", MASTERIP="", TOPIC="";
+		try {
+			Object obj = parser.parse(new FileReader("/home/ubuntu/project/sessionization/myconfigsasdf.json"));
+			JSONObject jsonObject =  (JSONObject) obj;
+			WORKERSIP = (String) jsonObject.get("WORKERS_IP");
+			MASTERIP  = (String) jsonObject.get("MASTER_IP");
+			TOPIC     = (String) jsonObject.get("TOPIC");
+		} catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
 
+
+
+
+		// Kafka connector
         Properties properties = new Properties();
-        //properties.setProperty("bootstrap.servers", "localhost:9092");
-        properties.setProperty("bootstrap.servers","172.31.55.173:9092,172.31.53.162:9092,172.31.56.220:9092");
-        // only required for Kafka 0.8
-        //properties.setProperty("zookeeper.connect", "localhost:2181");
-	properties.setProperty("zookeeper.connect", "172.31.53.147:2181");
+        properties.setProperty("bootstrap.servers",WORKERSIP);
+		properties.setProperty("zookeeper.connect", MASTERIP);
         properties.setProperty("group.id", "test");
-        //DataStream<String> dataStream = env
 
-        FlinkKafkaConsumer09<String> kafkaSource = new FlinkKafkaConsumer09<>("jtest30b", new SimpleStringSchema(), properties);
+        FlinkKafkaConsumer09<String> kafkaSource = new FlinkKafkaConsumer09<>(TOPIC, new SimpleStringSchema(), properties);
+
 
         DataStream<Tuple4<String, Long, Long, Integer>> datain = env
 	        .addSource(kafkaSource)
@@ -84,6 +96,11 @@ public class Windows {
             .keyBy(0)
             .timeWindow(Time.seconds(10))
             .sum(3);
+
+
+
+
+
 
 /*
 		SplitStream<Tuple4<String, Long, Long, Integer>> detectspider = clickcount
@@ -112,6 +129,8 @@ public class Windows {
 
 		spiders.addSink(new RedisSink<Tuple4<String, Long, Long, Integer>>(redisConf, new ViewerCountMapper()));
 */
+
+
 	FlinkJedisPoolConfig redisConf = new FlinkJedisPoolConfig.Builder().setHost("172.31.53.147").setPort(6379).build();
 //        FlinkJedisPoolConfig redisConf = new FlinkJedisPoolConfig.Builder().setHost("127.0.0.1").setPort(6379).build();
 	clickcount.addSink(new RedisSink<Tuple4<String, Long, Long, Integer>>(redisConf, new ViewerCountMapper()));

@@ -20,9 +20,9 @@ under the License.
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	
-	<groupId>wiki-edits</groupId>
-	<artifactId>wiki-edits</artifactId>
-	<version>0.1</version>
+	<groupId>consumer</groupId>
+	<artifactId>consumer</artifactId>
+	<version>0.0</version>
 	<packaging>jar</packaging>
 
 	<name>Flink Quickstart Job</name>
@@ -101,6 +101,16 @@ under the License.
 			<groupId>org.apache.flink</groupId>
 			<artifactId>flink-connector-redis_2.11</artifactId>
 			<version>1.1.5</version>
+		</dependency>
+		<dependency>
+			<groupId>org.json</groupId>
+			<artifactId>json</artifactId>
+			<version>20160810</version>
+		</dependency>
+		<dependency>
+			<groupId>com.googlecode.json-simple</groupId>
+			<artifactId>json-simple</artifactId>
+			<version>1.1.1</version>
 		</dependency>
 	</dependencies>
 
