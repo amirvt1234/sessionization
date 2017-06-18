@@ -1,5 +1,6 @@
 package consumer;
 
+
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.windowing.WindowFunction;
@@ -20,15 +21,27 @@ import org.apache.flink.streaming.api.functions.TimestampExtractor;
 import org.apache.flink.streaming.api.functions.timestamps.AscendingTimestampExtractor;
 import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.streaming.api.watermark.Watermark;
+
+
 import org.apache.flink.streaming.api.datastream.SplitStream;
 import org.apache.flink.streaming.api.collector.selector.OutputSelector;
+
 import org.apache.flink.streaming.connectors.redis.RedisSink;
 import org.apache.flink.streaming.connectors.redis.common.config.FlinkJedisPoolConfig;
+
+//import org.apache.flink.api.java.tuple.Tuple7;
+
+
+//import wikiedits.Mappers.*;
 import org.apache.flink.streaming.connectors.redis.common.mapper.RedisCommand;
 import org.apache.flink.streaming.connectors.redis.common.mapper.RedisCommandDescription;
 import org.apache.flink.streaming.connectors.redis.common.mapper.RedisMapper;
+
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.Config;
+
+
+//import org.json.JSONObject;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -38,7 +51,13 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+
+
 public class Windows {
+
+
+
+
 
     public static void main(String[] args) throws Exception {
 
@@ -46,11 +65,11 @@ public class Windows {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
 		// Reading configureations
-		// Not sure if this is the best way to read the data into Java; check it later
 		JSONParser parser = new JSONParser();
 		String WORKERSIP="", MASTERIP="", TOPIC="";
 		try {
-			Object obj = parser.parse(new FileReader("/home/ubuntu/project/sessionization/myconfigsasdf.json"));
+			//Object obj = parser.parse(new FileReader("/home/ubuntu/project/sessionization/myconfigs.json"));
+			Object obj = parser.parse(new FileReader("../myconfigs.json"));
 			JSONObject jsonObject =  (JSONObject) obj;
 			WORKERSIP = (String) jsonObject.get("WORKERS_IP");
 			MASTERIP  = (String) jsonObject.get("MASTER_IP");
