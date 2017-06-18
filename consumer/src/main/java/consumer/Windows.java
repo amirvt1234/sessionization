@@ -1,13 +1,12 @@
 package consumer;
 
-
+import java.util.*;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.windowing.WindowFunction;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer09;
-import java.util.*;
 import org.apache.flink.streaming.util.serialization.SimpleStringSchema;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.java.tuple.Tuple2;
@@ -21,27 +20,15 @@ import org.apache.flink.streaming.api.functions.TimestampExtractor;
 import org.apache.flink.streaming.api.functions.timestamps.AscendingTimestampExtractor;
 import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.streaming.api.watermark.Watermark;
-
-
 import org.apache.flink.streaming.api.datastream.SplitStream;
 import org.apache.flink.streaming.api.collector.selector.OutputSelector;
-
 import org.apache.flink.streaming.connectors.redis.RedisSink;
 import org.apache.flink.streaming.connectors.redis.common.config.FlinkJedisPoolConfig;
-
-//import org.apache.flink.api.java.tuple.Tuple7;
-
-
-//import wikiedits.Mappers.*;
 import org.apache.flink.streaming.connectors.redis.common.mapper.RedisCommand;
 import org.apache.flink.streaming.connectors.redis.common.mapper.RedisCommandDescription;
 import org.apache.flink.streaming.connectors.redis.common.mapper.RedisMapper;
-
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.Config;
-
-
-//import org.json.JSONObject;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -55,9 +42,7 @@ import org.json.simple.parser.ParseException;
 
 public class Windows {
 
-
-
-
+	public static int SPIDERSN;
 
     public static void main(String[] args) throws Exception {
 
@@ -65,40 +50,45 @@ public class Windows {
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
 		// Reading configureations
+		// Find a way to print an error message while there is an IO error...
 		JSONParser parser = new JSONParser();
-		String WORKERSIP="", MASTERIP="", TOPIC="";
-		try {
-			//Object obj = parser.parse(new FileReader("/home/ubuntu/project/sessionization/myconfigs.json"));
-			Object obj = parser.parse(new FileReader("../myconfigs.json"));
-			JSONObject jsonObject =  (JSONObject) obj;
-			WORKERSIP = (String) jsonObject.get("WORKERS_IP");
-			MASTERIP  = (String) jsonObject.get("MASTER_IP");
-			TOPIC     = (String) jsonObject.get("TOPIC");
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (ParseException e) {
-			e.printStackTrace();
-		}
 
-
-
+		Object obj = parser.parse(new FileReader("../myconfigs.json"));
+		JSONObject jsonObject =  (JSONObject) obj;
+		String WORKERSIP = (String) jsonObject.get("WORKERS_IP");
+		String MASTERIP  = (String) jsonObject.get("MASTER_IP");
+		String TOPIC     = (String) jsonObject.get("TOPIC");
+		Integer TUMBLINGW = Integer.parseInt((String) jsonObject.get("WINDOW_SIZE_T")); 
+		Integer SESSIONWS = Integer.parseInt((String) jsonObject.get("WINDOW_SIZE_S")); 
+		SPIDERSN  = Integer.parseInt((String) jsonObject.get("SPIDERSN"));
 
 		// Kafka connector
         Properties properties = new Properties();
         properties.setProperty("bootstrap.servers",WORKERSIP);
 		properties.setProperty("zookeeper.connect", MASTERIP);
         properties.setProperty("group.id", "test");
-
         FlinkKafkaConsumer09<String> kafkaSource = new FlinkKafkaConsumer09<>(TOPIC, new SimpleStringSchema(), properties);
 
-
+		//Input string to tupleof 4: <ID, Time-in, Time-out, Count>
         DataStream<Tuple4<String, Long, Long, Integer>> datain = env
 	        .addSource(kafkaSource)
             .flatMap(new LineSplitter());
 
+		// Calculate the number of clicks during the given period of time
+        DataStream<Tuple4<String, Long, Long, Integer>> clickcount = datain
+            .keyBy(0)
+            .timeWindow(Time.seconds(TUMBLINGW))
+            .sum(3);
 
+		// If the number of clicks during the summed window (clickcount) is larger
+		// than the value specified at SPIDERSN (myconfig.json) classify then as spiders(machine web crawlers)
+		SplitStream<Tuple4<String, Long, Long, Integer>> detectspider = clickcount
+				.split(new SpiderSelector());
+
+		DataStream<Tuple4<String, Long, Long, Integer>> spiders = detectspider.select("spider");
+
+		//Adds the watermark: Here I assume that the data from Kafka arrives in ascending order which simplifies the coding.
+		//Consider adding more sophisticated watermark function
         DataStream<Tuple4<String, Long, Long, Integer>> withTimestampsAndWatermarks =
             datain.assignTimestampsAndWatermarks(new AscendingTimestampExtractor<Tuple4<String, Long, Long, Integer>>() {
 
@@ -109,33 +99,11 @@ public class Windows {
         });
 
 
-
-
-        DataStream<Tuple4<String, Long, Long, Integer>> clickcount = datain
-            .keyBy(0)
-            .timeWindow(Time.seconds(10))
-            .sum(3);
-
-
-
-
-
-
-/*
-		SplitStream<Tuple4<String, Long, Long, Integer>> detectspider = clickcount
-				.split(new MySelector());
-		DataStream<Tuple4<String, Long, Long, Integer>> spiders = detectspider.select("spider");
-
-
-
-
-
         DataStream<Tuple4<String, Long, Long, Integer>> testsession = withTimestampsAndWatermarks
             .keyBy(0)
             //.window(EventTimeSessionWindows.withGap(Time.milliseconds(2L)))
             //.emitWatermark(new Watermark(Long.MAX_VALUE))
             .window(ProcessingTimeSessionWindows.withGap(Time.seconds(1)))
-            //.sum(2);
             .reduce (new ReduceFunction<Tuple4<String, Long, Long, Integer>>() {
                 public Tuple4<String, Long, Long, Integer> reduce(Tuple4<String, Long, Long, Integer> value1, Tuple4<String, Long, Long, Integer> value2) throws Exception {
                     return new Tuple4<String, Long, Long, Integer>(value1.f0, value1.f1, value2.f1, value1.f3+value2.f3);
@@ -147,12 +115,11 @@ public class Windows {
         FlinkJedisPoolConfig redisConf = new FlinkJedisPoolConfig.Builder().setHost("127.0.0.1").setPort(6379).build();
 
 		spiders.addSink(new RedisSink<Tuple4<String, Long, Long, Integer>>(redisConf, new ViewerCountMapper()));
-*/
 
 
-	FlinkJedisPoolConfig redisConf = new FlinkJedisPoolConfig.Builder().setHost("172.31.53.147").setPort(6379).build();
+//	FlinkJedisPoolConfig redisConf = new FlinkJedisPoolConfig.Builder().setHost("172.31.53.147").setPort(6379).build();
 //        FlinkJedisPoolConfig redisConf = new FlinkJedisPoolConfig.Builder().setHost("127.0.0.1").setPort(6379).build();
-	clickcount.addSink(new RedisSink<Tuple4<String, Long, Long, Integer>>(redisConf, new ViewerCountMapper()));
+//	clickcount.addSink(new RedisSink<Tuple4<String, Long, Long, Integer>>(redisConf, new ViewerCountMapper()));
         clickcount.print();
         //testsession.print();
 	//	spiders.print();
@@ -163,14 +130,14 @@ public class Windows {
 
     }
 
-	// figure out what does "serialVersionUID" means....
-	public static class MySelector implements OutputSelector<Tuple4<String, Long, Long, Integer>> {
+	// figure out what does "serialVersionUID" means. Many codes include it but dont know why....
+	public static class SpiderSelector implements OutputSelector<Tuple4<String, Long, Long, Integer>> {
 		private static final long serialVersionUID = 1L;
 
 		@Override
 		public Iterable<String> select(Tuple4<String, Long, Long, Integer> value) {
 			List<String> output = new ArrayList<>();
-			if (value.f3 > 3) {
+			if (value.f3 > SPIDERSN) {
 				output.add("spider");
 			} else {
 				output.add("legit");

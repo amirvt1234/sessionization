@@ -52,11 +52,12 @@ with topic.get_producer(partitioner=hash_partitioner, linger_ms = 200) as produc
 
 """
 ld1 = []
-for i in range(30000):
+for i in range(30):
 	ld1.append([i,1]) 
 with topic.get_producer(partitioner=hash_partitioner, linger_ms = 200) as producer:
 	for index, item in enumerate(ld1):
-		outputStr = "%s;%s" % (item[0], item[1])
+		##outputStr = "%s;%i".format(str(item[0]), item[1])
+		outputStr = b"{};{}".format(item[0], item[1])
 		producer.produce(outputStr, partition_key="%i".format(item[0]))
 
 
