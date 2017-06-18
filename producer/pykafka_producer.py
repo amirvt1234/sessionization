@@ -79,14 +79,14 @@ def unittestproducer():
 		times = time.time()
 		eventTime  += dt-delay # event time in Seconds
 		currID = item
-	    	#outputStr = "%s;%s" % (currID, eventTime+dtime)
-        	outputStr = "{};{}".format(currID, np.int(1))
+			#outputStr = "%s;%s" % (currID, eventTime+dtime)
+			outputStr = "{};{}".format(currID, np.int(1))
 		#times = time.time()
-	    	producer.produce(outputStr, partition_key=str(currID))
-	    	delay = (time.time()-times)
+			producer.produce(outputStr, partition_key=str(currID))
+			delay = (time.time()-times)
 		#if (dt-delay)<0.:
 		#	print "hey fix me"
-                #print dt, delay
+				#print dt, delay
 		time.sleep(max(0.7*(dt-delay),1e-9))
 		times = time.time()
 
