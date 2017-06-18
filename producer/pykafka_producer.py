@@ -75,7 +75,7 @@ def unittestproducer():
     eventTime = 0
     delay = 0
     #times = time.time()
-	for index, item in enumerate(ld1):
+    for index, item in enumerate(ld1):
         times = time.time()
         eventTime  += dt-delay # event time in Seconds
         currID = item
@@ -86,7 +86,7 @@ def unittestproducer():
         delay = (time.time()-times)
         #if (dt-delay)<0.:
         #	print "hey fix me"
-	        #print dt, delay
+        #print dt, delay
     time.sleep(max(0.7*(dt-delay),1e-9))
     times = time.time()
 
