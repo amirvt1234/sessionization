@@ -128,22 +128,22 @@ public class Windows  {
         env.execute("Sessionization");
     }
 
-	// figure out what does "serialVersionUID" means. Many codes include it but dont know why....
-	public static class SpiderSelector implements OutputSelector<Tuple4<String, Long, Long, Integer>> {
-		private static final long serialVersionUID = 1L;
+    // figure out what does "serialVersionUID" means. Many codes include it but dont know why....
+    public static class SpiderSelector implements OutputSelector<Tuple4<String, Long, Long, Integer>> {
+        private static final long serialVersionUID = 1L;
 
-		@Override
-		public Iterable<String> select(Tuple4<String, Long, Long, Integer> value) {
-			List<String> output = new ArrayList<>();
-			
-			if (value.f3 > SPIDERSN) {
-				output.add("spider");
-			} else {
-				output.add("legit");
-			}
-			return output;
-		}
-	}
+        @Override
+        public Iterable<String> select(Tuple4<String, Long, Long, Integer> value) {
+            List<String> output = new ArrayList<>();
+
+            if (value.f3 > SPIDERSN) {
+	            output.add("spider");
+            } else {
+	            output.add("legit");
+            }
+            return output;
+        }
+    }
 
     public static class LineSplitter implements FlatMapFunction<String, Tuple4<String, Long, Long, Integer>> {
         @Override
@@ -153,8 +153,7 @@ public class Windows  {
         }
     }
 
-    public static class MyReducer
-            implements ReduceFunction< Tuple4<String, Long, Long, Integer>> {
+    public static class MyReducer implements ReduceFunction< Tuple4<String, Long, Long, Integer>> {
 
         public Tuple4<String, Long, Long, Integer> reduce(Tuple4<String, Long, Long, Integer> value1, Tuple4<String, Long, Long, Integer> value2) {
             return new Tuple4<String, Long, Long, Integer>(value1.f0, value1.f1, value2.f1, value1.f3+value2.f3);
