@@ -56,48 +56,48 @@ public class Windows  {
 
     public static void main(String[] args) throws Exception {
 
-		ParameterTool parameter = ParameterTool.fromPropertiesFile(propertiesFile);
-		// Set up the flink streaming environment
+        ParameterTool parameter = ParameterTool.fromPropertiesFile(propertiesFile);
+        // Set up the flink streaming environment
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
-		// Reading configureations
-		JSONParser parser = new JSONParser();
-		Object obj = parser.parse(new FileReader("../myconfigs.json"));
-		JSONObject jsonObject =  (JSONObject) obj;
-		String WORKERSIP = (String) jsonObject.get("WORKERS_IP");
-		String MASTERIP  = (String) jsonObject.get("MASTER_IP");
-		String TOPIC     = (String) jsonObject.get("TOPIC"); 
-		String REDISIP = (String) jsonObject.get("REDIS_IP"); 
+        // Reading configureations
+        JSONParser parser = new JSONParser();
+        Object obj = parser.parse(new FileReader("../myconfigs.json"));
+        JSONObject jsonObject =  (JSONObject) obj;
+        String WORKERSIP = (String) jsonObject.get("WORKERS_IP");
+        String MASTERIP  = (String) jsonObject.get("MASTER_IP");
+        String TOPIC     = (String) jsonObject.get("TOPIC"); 
+        String REDISIP = (String) jsonObject.get("REDIS_IP"); 
 
-		// Kafka connector
+        // Kafka connector
         Properties properties = new Properties();
         properties.setProperty("bootstrap.servers",WORKERSIP);
-		properties.setProperty("zookeeper.connect", MASTERIP);
+        properties.setProperty("zookeeper.connect", MASTERIP);
         properties.setProperty("group.id", "test");
         FlinkKafkaConsumer09<String> kafkaSource = new FlinkKafkaConsumer09<>(TOPIC, new SimpleStringSchema(), properties);
 
-		//Input string to tupleof 4: <ID, Time-in, Time-out, Count>
+        //Input string to tupleof 4: <ID, Time-in, Time-out, Count>
         DataStream<Tuple4<String, Long, Long, Integer>> datain = env
-	        .addSource(kafkaSource)
+            .addSource(kafkaSource)
             .flatMap(new LineSplitter());
 
-		// Calculate the number of clicks during the given period of time
+        // Calculate the number of clicks during the given period of time
         DataStream<Tuple4<String, Long, Long, Integer>> clickcount = datain
             .keyBy(0)
             .timeWindow(Time.seconds(TUMBLINGW))
             .reduce(new MyReducer());
 
-		//The totalcount will perform on a single machine by nature: can be optimized ...
+        //The totalcount will perform on a single machine by nature: can be optimized ...
         DataStream<Tuple4<String, Long, Long, Integer>> totalcount = datain
-			.windowAll(TumblingProcessingTimeWindows.of(Time.seconds(TUMBLINGW)))
+            .windowAll(TumblingProcessingTimeWindows.of(Time.seconds(TUMBLINGW)))
             .sum(3);
 
-		// If the number of clicks during the summed window (clickcount) is larger
-		SplitStream<Tuple4<String, Long, Long, Integer>> detectspider = clickcount
-				.split(new SpiderSelector());
+        // If the number of clicks during the summed window (clickcount) is larger
+        SplitStream<Tuple4<String, Long, Long, Integer>> detectspider = clickcount
+            .split(new SpiderSelector());
 
-		//Adds the watermark: Here I assume that the data from Kafka arrives in ascending order which simplifies the coding.
-		//Consider adding more sophisticated watermark function
+        //Adds the watermark: Here I assume that the data from Kafka arrives in ascending order which simplifies the coding.
+        //Consider adding more sophisticated watermark function
         DataStream<Tuple4<String, Long, Long, Integer>> withTimestampsAndWatermarks =
             datain.assignTimestampsAndWatermarks(new AscendingTimestampExtractor<Tuple4<String, Long, Long, Integer>>() {
                 @Override
@@ -106,7 +106,7 @@ public class Windows  {
                 }
         });
 
-		// Calculates the sessions...
+        // Calculates the sessions...
         DataStream<Tuple4<String, Long, Long, Integer>> usersession = withTimestampsAndWatermarks
             .keyBy(0)
             .window(ProcessingTimeSessionWindows.withGap(Time.seconds(SESSIONWS)))
@@ -116,11 +116,11 @@ public class Windows  {
         FlinkJedisPoolConfig redisConf = new FlinkJedisPoolConfig.Builder().setHost(REDISIP).setPort(6379).build();
 
         // Sink data to Redis
-		clickcount.addSink(new RedisSink<Tuple4<String, Long, Long, Integer>>(redisConf, new ViewerCountMapper()));
-		totalcount.addSink(new RedisSink<Tuple4<String, Long, Long, Integer>>(redisConf, new TotalCountMapper()));
-		detectspider
-		    .select("spider")
-			.addSink(new RedisSink<Tuple4<String, Long, Long, Integer>>(redisConf, new SpidersIDMapper()));
+        clickcount.addSink(new RedisSink<Tuple4<String, Long, Long, Integer>>(redisConf, new ViewerCountMapper()));
+        totalcount.addSink(new RedisSink<Tuple4<String, Long, Long, Integer>>(redisConf, new TotalCountMapper()));
+        detectspider
+            .select("spider")
+            .addSink(new RedisSink<Tuple4<String, Long, Long, Integer>>(redisConf, new SpidersIDMapper()));
         usersession.addSink(new RedisSink<Tuple4<String, Long, Long, Integer>>(redisConf, new EngagementMapper()));
 
 
