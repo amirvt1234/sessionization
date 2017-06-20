@@ -47,11 +47,11 @@ import org.apache.flink.api.java.utils.ParameterTool;
 
 public class Windows  {
 
-	public static String propertiesFile = "../myjob.properties";
-	
+    public static String propertiesFile = "../myjob.properties";
+
     // Some window parameters
-	public static int SPIDERSN  = 8; 
-	public static int TUMBLINGW = 60;
+    public static int SPIDERSN  = 8; 
+    public static int TUMBLINGW = 60;
     public static int SESSIONWS = 60;
 
     public static void main(String[] args) throws Exception {
