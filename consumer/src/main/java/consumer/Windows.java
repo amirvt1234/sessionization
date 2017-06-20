@@ -137,9 +137,9 @@ public class Windows  {
             List<String> output = new ArrayList<>();
 
             if (value.f3 > SPIDERSN) {
-	            output.add("spider");
+                output.add("spider");
             } else {
-	            output.add("legit");
+                output.add("legit");
             }
             return output;
         }
@@ -160,80 +160,80 @@ public class Windows  {
         }
     }
 
-	public static class EngagementMapper implements RedisMapper<Tuple4<String, Long, Long, Integer>> {
+    public static class EngagementMapper implements RedisMapper<Tuple4<String, Long, Long, Integer>> {
 
-		@Override
-		public RedisCommandDescription getCommandDescription() {
-			return new RedisCommandDescription(RedisCommand.ZADD, "EngagementTime");
-		}
+        @Override
+        public RedisCommandDescription getCommandDescription() {
+            return new RedisCommandDescription(RedisCommand.ZADD, "EngagementTime");
+        }
 
-		@Override
-		public String getKeyFromData(Tuple4<String, Long, Long, Integer> data) {
-			return data.getField(0);
-		}
+        @Override
+        public String getKeyFromData(Tuple4<String, Long, Long, Integer> data) {
+            return data.getField(0);
+        }
 
-		@Override
-		public String getValueFromData(Tuple4<String, Long, Long, Integer> data) {
-			Double stime =  ((Long) data.getField(1)).doubleValue();			
-			Double etime =  ((Long) data.getField(2)).doubleValue();
-			//fixme
-			return Double.toString(Math.floor(etime-stime));
-		}
-	}
+        @Override
+        public String getValueFromData(Tuple4<String, Long, Long, Integer> data) {
+            Double stime =  ((Long) data.getField(1)).doubleValue();			
+            Double etime =  ((Long) data.getField(2)).doubleValue();
+            //fixme
+            return Double.toString(Math.floor(etime-stime));
+        }
+    }
 
-	public static class ViewerCountMapper implements RedisMapper<Tuple4<String, Long, Long, Integer>> {
+    public static class ViewerCountMapper implements RedisMapper<Tuple4<String, Long, Long, Integer>> {
 
-		@Override
-		public RedisCommandDescription getCommandDescription() {
-			return new RedisCommandDescription(RedisCommand.ZADD, "ViewerCount");
-		}
+        @Override
+        public RedisCommandDescription getCommandDescription() {
+            return new RedisCommandDescription(RedisCommand.ZADD, "ViewerCount");
+        }
 
-		@Override
-		public String getKeyFromData(Tuple4<String, Long, Long, Integer> data) {
-			return data.getField(0);
-		}
+        @Override
+        public String getKeyFromData(Tuple4<String, Long, Long, Integer> data) {
+            return data.getField(0);
+        }
 
-		@Override
-		public String getValueFromData(Tuple4<String, Long, Long, Integer> data) {
-			return data.getField(3).toString();
-		}
-	}
+        @Override
+        public String getValueFromData(Tuple4<String, Long, Long, Integer> data) {
+            return data.getField(3).toString();
+        }
+    }
 
-	public static class TotalCountMapper implements RedisMapper<Tuple4<String, Long, Long, Integer>>{
+    public static class TotalCountMapper implements RedisMapper<Tuple4<String, Long, Long, Integer>>{
 
-		@Override
-		public RedisCommandDescription getCommandDescription() {
-		return new RedisCommandDescription(RedisCommand.HSET, "TOTAL_COUNT");
-		}
+        @Override
+        public RedisCommandDescription getCommandDescription() {
+            return new RedisCommandDescription(RedisCommand.HSET, "TOTAL_COUNT");
+        }
 
-		@Override
-		public String getKeyFromData(Tuple4<String, Long, Long, Integer> data) {
-		return (String) "totalcount";
-		}
+        @Override
+        public String getKeyFromData(Tuple4<String, Long, Long, Integer> data) {
+            return (String) "totalcount";
+        }
 
-		@Override
-		public String getValueFromData(Tuple4<String, Long, Long, Integer> data) {
-		return data.f3.toString();
-		}
-	}
+        @Override
+        public String getValueFromData(Tuple4<String, Long, Long, Integer> data) {
+            return data.f3.toString();
+        }
+    }
 
-	public static class SpidersIDMapper implements RedisMapper<Tuple4<String, Long, Long, Integer>>{
+    public static class SpidersIDMapper implements RedisMapper<Tuple4<String, Long, Long, Integer>>{
 
-		@Override
-		public RedisCommandDescription getCommandDescription() {
-		return new RedisCommandDescription(RedisCommand.HSET, "SPIDERS");
-		}
+        @Override
+        public RedisCommandDescription getCommandDescription() {
+            return new RedisCommandDescription(RedisCommand.HSET, "SPIDERS");
+        }
 
-		@Override
-		public String getKeyFromData(Tuple4<String, Long, Long, Integer> data) {
-		return data.f0;
-		}
+        @Override
+        public String getKeyFromData(Tuple4<String, Long, Long, Integer> data) {
+            return data.f0;
+        }
 
-		@Override
-		public String getValueFromData(Tuple4<String, Long, Long, Integer> data) {
-		return (String) "True";
-		}
-	}
+        @Override
+        public String getValueFromData(Tuple4<String, Long, Long, Integer> data) {
+            return (String) "True";
+        }
+    }
 
 }
 
