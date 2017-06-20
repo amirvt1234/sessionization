@@ -49,29 +49,25 @@ public class Windows  {
 
 	public static String propertiesFile = "../myjob.properties";
 	
-
-	public static int SPIDERSN=90; 
-	public static int TWINDOWS=60;
+    // Some window parameters
+	public static int SPIDERSN  = 8; 
+	public static int TUMBLINGW = 60;
+    public static int SESSIONWS = 60;
 
     public static void main(String[] args) throws Exception {
+
 		ParameterTool parameter = ParameterTool.fromPropertiesFile(propertiesFile);
 		// Set up the flink streaming environment
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
-
 		// Reading configureations
-		// Find a way to print an error message while there is an IO error...
 		JSONParser parser = new JSONParser();
-
 		Object obj = parser.parse(new FileReader("../myconfigs.json"));
 		JSONObject jsonObject =  (JSONObject) obj;
 		String WORKERSIP = (String) jsonObject.get("WORKERS_IP");
 		String MASTERIP  = (String) jsonObject.get("MASTER_IP");
-		String TOPIC     = (String) jsonObject.get("TOPIC");
-		Integer TUMBLINGW = Integer.parseInt((String) jsonObject.get("WINDOW_SIZE_T")); 
-		Integer SESSIONWS = Integer.parseInt((String) jsonObject.get("WINDOW_SIZE_S"));
+		String TOPIC     = (String) jsonObject.get("TOPIC"); 
 		String REDISIP = (String) jsonObject.get("REDIS_IP"); 
-
 
 		// Kafka connector
         Properties properties = new Properties();
@@ -89,70 +85,48 @@ public class Windows  {
         DataStream<Tuple4<String, Long, Long, Integer>> clickcount = datain
             .keyBy(0)
             .timeWindow(Time.seconds(TUMBLINGW))
-            .sum(3);
+            .reduce(new MyReducer());
 
-		//The totalcount will perform on a single machine by nature
-		//What I have done here is not efficient. This part needs to be done in the 
-		// database environment to avoid repeating the same counting we did with groupby
-		// Left it for knwo for testing purposes... 
+		//The totalcount will perform on a single machine by nature: can be optimized ...
         DataStream<Tuple4<String, Long, Long, Integer>> totalcount = datain
-            //.windowAll(TumblingEventTimeWindows.of(Time.seconds(60)))
 			.windowAll(TumblingProcessingTimeWindows.of(Time.seconds(TUMBLINGW)))
             .sum(3);
 
 		// If the number of clicks during the summed window (clickcount) is larger
-		// than the value specified at SPIDERSN (myconfig.json) classify then as spiders(machine web crawlers)
 		SplitStream<Tuple4<String, Long, Long, Integer>> detectspider = clickcount
 				.split(new SpiderSelector());
-
-
-		DataStream<Tuple4<String, Long, Long, Integer>> spiders = detectspider.select("spider");
 
 		//Adds the watermark: Here I assume that the data from Kafka arrives in ascending order which simplifies the coding.
 		//Consider adding more sophisticated watermark function
         DataStream<Tuple4<String, Long, Long, Integer>> withTimestampsAndWatermarks =
             datain.assignTimestampsAndWatermarks(new AscendingTimestampExtractor<Tuple4<String, Long, Long, Integer>>() {
-
                 @Override
                 public long extractAscendingTimestamp(Tuple4<String, Long, Long, Integer> element) {
                     return element.f1;
                 }
         });
 
-
-		// move reduce function inside a new class...
-        DataStream<Tuple4<String, Long, Long, Integer>> testsession = withTimestampsAndWatermarks
+		// Calculates the sessions...
+        DataStream<Tuple4<String, Long, Long, Integer>> usersession = withTimestampsAndWatermarks
             .keyBy(0)
-            //.window(EventTimeSessionWindows.withGap(Time.milliseconds(2L)))
-            //.emitWatermark(new Watermark(Long.MAX_VALUE))
-            .window(ProcessingTimeSessionWindows.withGap(Time.seconds(1)))
-            .reduce (new ReduceFunction<Tuple4<String, Long, Long, Integer>>() {
-                public Tuple4<String, Long, Long, Integer> reduce(Tuple4<String, Long, Long, Integer> value1, Tuple4<String, Long, Long, Integer> value2) throws Exception {
-                    return new Tuple4<String, Long, Long, Integer>(value1.f0, value1.f1, value2.f1, value1.f3+value2.f3);
-                }
-            });
+            .window(ProcessingTimeSessionWindows.withGap(Time.seconds(SESSIONWS)))
+            .reduce (new MyReducer());
 
-
-
+        // Configure the Redis
         FlinkJedisPoolConfig redisConf = new FlinkJedisPoolConfig.Builder().setHost(REDISIP).setPort(6379).build();
 
+        // Sink data to Redis
 		clickcount.addSink(new RedisSink<Tuple4<String, Long, Long, Integer>>(redisConf, new ViewerCountMapper()));
 		totalcount.addSink(new RedisSink<Tuple4<String, Long, Long, Integer>>(redisConf, new TotalCountMapper()));
-		//totalcount.addSink(new RedisSink<Tuple4<String, Long, Long, Integer>>(redisConf, new SpidersID()));
 		detectspider
 		    .select("spider")
 			.addSink(new RedisSink<Tuple4<String, Long, Long, Integer>>(redisConf, new SpidersIDMapper()));
-        //clickcount.print();
-		totalcount.print();
-        //testsession.print();
-	//	spiders.print();
+        usersession.addSink(new RedisSink<Tuple4<String, Long, Long, Integer>>(redisConf, new EngagementMapper()));
 
 
+        // Execute the Program 
         env.execute("Sessionization");
-
-
     }
-
 
 	// figure out what does "serialVersionUID" means. Many codes include it but dont know why....
 	public static class SpiderSelector implements OutputSelector<Tuple4<String, Long, Long, Integer>> {
@@ -163,8 +137,6 @@ public class Windows  {
 			List<String> output = new ArrayList<>();
 			
 			if (value.f3 > SPIDERSN) {
-			//if (value.f3 > SESSIONWSdd){
-			//if (value.f3 > 80) {
 				output.add("spider");
 			} else {
 				output.add("legit");
@@ -178,6 +150,14 @@ public class Windows  {
         public void flatMap(String line, Collector<Tuple4<String, Long, Long, Integer>> out) {
             String[] word = line.split(";");
             out.collect(new Tuple4<String, Long, Long, Integer>(word[0], Long.parseLong(word[1]), Long.parseLong(word[1]), 1));
+        }
+    }
+
+    public static class MyReducer
+            implements ReduceFunction< Tuple4<String, Long, Long, Integer>> {
+
+        public Tuple4<String, Long, Long, Integer> reduce(Tuple4<String, Long, Long, Integer> value1, Tuple4<String, Long, Long, Integer> value2) {
+            return new Tuple4<String, Long, Long, Integer>(value1.f0, value1.f1, value2.f1, value1.f3+value2.f3);
         }
     }
 
@@ -220,8 +200,6 @@ public class Windows  {
 		}
 	}
 
-
-
 	public static class TotalCountMapper implements RedisMapper<Tuple4<String, Long, Long, Integer>>{
 
 		@Override
@@ -257,7 +235,6 @@ public class Windows  {
 		return (String) "True";
 		}
 	}
-
 
 }
 
