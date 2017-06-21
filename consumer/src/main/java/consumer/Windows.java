@@ -56,7 +56,6 @@ public class Windows  {
 
     public static void main(String[] args) throws Exception {
 
-        ParameterTool parameter = ParameterTool.fromPropertiesFile(propertiesFile);
         // Set up the flink streaming environment
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 

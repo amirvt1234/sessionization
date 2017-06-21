@@ -7,12 +7,12 @@ import time
 import json
 
 
-def producerf(singlewindow=True ):
+def producerf(singlewindow=False ):
     tw = 1*60. # The time window in seconds
-    nvfv = {'1'   :[0       , int(10), int(1)], # [0,   1e6): (forgetters)
-            '2'   :[int(10), int(20), int(1)], # [1e6, 2e6): (login-logout) 
-            '3'  :[int(20), int(30), int(1)], # [2e6, 3e6): (active-user)
-            '40' :[int(30), int(40), int(1)]} # [3e6, 4e6): (machine-spam)
+    nvfv = {'1'   :[0       , int(1e6), int(1e4)], # [0,   1e6): (forgetters)
+            '5'   :[int(1e6), int(2e6), int(1e4)], # [1e6, 2e6): (login-logout) 
+            '9'  :[int(2e6), int(3e6), int(1e4)], # [2e6, 3e6): (active-user)
+            '1000' :[int(3e6), int(4e6), int(1)]} # [3e6, 4e6): (machine-spam)
     with open('../myconfigs.json', 'r') as f:
         myconfigs = json.load(f)
     # Set up the kafka clients. Here I have used 30 partitions and I am defining 3 working nodes as clients
@@ -45,12 +45,10 @@ def producef(tw, nvfv, producer, starttime):
     eventTime = 0
     delay = 0
     timedd = time.time()
-    #times = time.time()
     for index, item in enumerate(ld1):
         times = time.time()
         eventTime  += dt-delay # event time in Seconds
         currID = item
-        print currID, eventTime
         outputStr = "{};{}".format(currID, np.int64(np.floor(eventTime+starttime)*1e3)) # write the time in milliseconds
         producer.produce(outputStr, partition_key=str(currID))
         delay = (time.time()-times)
