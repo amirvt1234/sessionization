@@ -10,8 +10,8 @@ Table of Contents
   * [Summary](#session-spectator)
   * [Table of Contents](#table-of-contents)
   * [Dependency](#dependency)
-  * [Installation](# Installation)
-  * [Usage](# Usage)
+  * [Installation](#installation)
+  * [Usage](#usage)
     * [STDIN](#stdin)
 
 
