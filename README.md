@@ -23,6 +23,8 @@ Dependency
 Installation
 ============
 
+This program has been installed and test locally and on AWS. For installing the required packages on AWS please follow [Pegasus Instruction](https://github.com/InsightDataScience/pegasus) 
+
 
 
 Usage
