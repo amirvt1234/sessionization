@@ -9,13 +9,23 @@ Table of Contents
 
   * [Summary](#session-spectator)
   * [Table of Contents](#table-of-contents)
+  * [Dependency](#dependency)
   * [Installation](# Installation)
   * [Usage](# Usage)
     * [STDIN](#stdin)
-  * [Dependency](#dependency)
 
-# Installation
 
-# Usage
+Dependency
+==========
+
+
+
+Installation
+============
+
+
+
+Usage
+=====
 
 
