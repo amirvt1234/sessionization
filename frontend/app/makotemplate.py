@@ -1,4 +1,8 @@
-from app import app
+from mako.template import Template
+import time
+
+tpl = Template(
+"""from app import app
 from flask import render_template
 import json
 import redis
@@ -24,7 +28,7 @@ class mostengagedtabe(Table):
     name = Col('User ID')
     description = Col('Session Time')
 
-x= 189
+x= ${ some_integer }
 
 def get_most_engaged():
        response = redisConnection.zrange('EngagementTime',0,11,True,True)
@@ -47,6 +51,7 @@ def stream_template(template_name, **context):
     t = app.jinja_env.get_template(template_name)
     rv = t.stream(context)
     # uncomment if you don't need immediate reaction
+    ##rv.enable_buffering(5)
     return rv
 
 
@@ -69,3 +74,16 @@ def index():
   return render_template("index.html", title = 'Home', user = user,  tables=[table1, table2], titles=titles)
   #return Response(stream_template('index.html', title = 'Home', user = user,  tables=g(), titles=titles))
   #return Response(stream_template('salam.html', data=g()))
+""")  
+
+
+i = 0
+while True:
+    with open('views.py', 'w') as f:
+        rendered_tpl = tpl.render(some_integer= str(i))
+        f.write(rendered_tpl)
+    f.close()
+    i +=1
+    time.sleep(5)    
+#print rendered_tpl
+
