@@ -1,9 +1,81 @@
-<html>
+<html lang="en">
 <meta http-equiv="refresh" content="5">
 <head>
-   <title>{{title}} - microblog</title>
+   <title>{{title}}</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='bootstrap.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='jumbotron-narrow.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='style.css') }}">
 </head>
 <body>
+
+
+    <div class="container">
+        <div class="header">
+            <nav>
+                <ul class="nav nav-pills pull-right">
+                    <li role="presentation" class="active"><a href="#">Home</a>
+                    </li>
+                    <li role="presentation"><a href="https://drive.google.com/drive/u/0/folders/0B2DuM70K13oTa2VsX3RZd2N1X2M" target="_blank">Slides</a>
+                    </li>
+                    <li role="presentation"><a href="https://github.com/amirzainali/sessionization" target="_blank">Github</a>
+                    </li>
+                </ul>
+            </nav>
+            <h3 class="text-muted">Session Spectator</h3>
+        </div>
+ 
+        <div class="jumbotron">
+            <h3>Track User Behavior Across Dynamic Windows</h3>
+            <p class="lead"></p>
+            <!-- <p><a class="btn btn-lg btn-success" href="showSignUp" role="button">Sign up today</a> -->
+            </p>
+        </div>
+ 
+        <div class="row marketing">
+
+
+            <div class="col-md-4 col-md-offset-2">
+<p><a class="btn btn-lg btn-success" href="db_enc" role="button">10 Recent Longest Sessions</a><br>
+
+</p>
+  <table>
+    {{ table1 }}
+  </table>
+
+
+            </div>
+
+            <div class="col-md-4"> 
+
+<p><a class="btn btn-lg btn-success" href="db_enc" role="button">10 Recent Longest Sessions</a><br>
+
+</p>
+
+  <table>
+    {{ table1 }}
+  </table>
+
+            </div>
+
+
+        </div>
+
+    <div class="container">
+<div class="table">
+  <table>
+    {{ table1 }}
+  </table>
+</div>
+
+    </div> 
+        <footer class="footer">
+            <p>&copy; 2017</p>
+        </footer>
+ 
+    </div>
+
+
+<!--...
 <link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
 <div class=page>
    <h1>Hello, {{user.nickname}}!</h1>
@@ -12,6 +84,7 @@
     {{ table|safe }}
   {% endfor %}
 </div>
+-->
 
 </body>
 </html>
