@@ -35,7 +35,7 @@
 
 
             <div class="col-md-4 col-md-offset-2">
-<p><a class="btn btn-lg btn-success" href="db_enc" role="button">10 Recent Longest Sessions</a><br>
+<p><a class="btn btn-lg btn-success" href="db_enc" role="button">10 Recent Internt Bots</a><br>
 
 </p>
   <table>
@@ -52,7 +52,7 @@
 </p>
 
   <table>
-    {{ table1 }}
+    {{ table2 }}
   </table>
 
             </div>
@@ -61,11 +61,6 @@
         </div>
 
     <div class="container">
-<div class="table">
-  <table>
-    {{ table1 }}
-  </table>
-</div>
 
     </div> 
         <footer class="footer">
@@ -74,17 +69,6 @@
  
     </div>
 
-
-<!--...
-<link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
-<div class=page>
-   <h1>Hello, {{user.nickname}}!</h1>
-  {% for table in tables %}
-    <h2>{{titles[loop.index]}}</h2>
-    {{ table|safe }}
-  {% endfor %}
-</div>
--->
 
 </body>
 </html>

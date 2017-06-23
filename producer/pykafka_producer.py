@@ -8,6 +8,8 @@ import json
 sys.path.append("../utils") # fix me!
 import redisdb
 
+redisexpiretime = 60.*7  # move to config file 
+
 def producerf(singlewindow=False ):
     tw = 1*60. # The time window in seconds
     nvfv = {'1'   :[0       , int(1e6), int(1e4)], # [0,   1e6): (forgetters)
@@ -30,6 +32,9 @@ def producerf(singlewindow=False ):
         while True:
             starttime = producef(tw, nvfv, producer, starttime)
             print starttime
+            #if (starttime % redisexpiretime) < 2:
+            #    redisdb.set_expire_time(int(redisexpiretime))
+            #    print "hi"
 
 
 def producef(tw, nvfv, producer, starttime):
@@ -50,18 +55,19 @@ def producef(tw, nvfv, producer, starttime):
         times = time.time()
         eventTime  += dt-delay # event time in Seconds
         currID = item
-        outputStr = "{};{}".format(currID, np.int64(np.floor(eventTime+starttime)*1e3)) # write the time in milliseconds
+        outputStr = b"{};{}".format(currID, np.int64(np.floor(eventTime+starttime)*1e3)) # write the time in milliseconds
         isspider = redisdb.check_if_spider(str(currID))
         if isspider != str(True):
             producer.produce(outputStr, partition_key=str(currID))
         delay = (time.time()-times)
-        time.sleep(max(0.7*(dt-delay),1e-9))
+        #time.sleep(max(0.7*(dt-delay),1e-9))
     times = time.time()
     print time.time()-timedd
     return starttime + tw
     
 if __name__ == '__main__':
     #process(sys.argv[1:])
+    redisdb.flush_all_keys()
     producerf()
     sys.exit(0)
 
