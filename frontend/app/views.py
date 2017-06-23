@@ -1,7 +1,6 @@
 from app import app
 from flask import render_template
 import json
-import redis
 from flask_table import Table, Col
 import flask
 import time

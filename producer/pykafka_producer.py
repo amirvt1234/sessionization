@@ -5,7 +5,8 @@ from pykafka.partitioners import BasePartitioner
 import numpy as np
 import time
 import json
-
+sys.path.append("../utils") # fix me!
+import redisdb
 
 def producerf(singlewindow=False ):
     tw = 1*60. # The time window in seconds
@@ -50,7 +51,9 @@ def producef(tw, nvfv, producer, starttime):
         eventTime  += dt-delay # event time in Seconds
         currID = item
         outputStr = "{};{}".format(currID, np.int64(np.floor(eventTime+starttime)*1e3)) # write the time in milliseconds
-        producer.produce(outputStr, partition_key=str(currID))
+        isspider = redisdb.check_if_spider(str(currID))
+        if isspider != str(True):
+            producer.produce(outputStr, partition_key=str(currID))
         delay = (time.time()-times)
         time.sleep(max(0.7*(dt-delay),1e-9))
     times = time.time()

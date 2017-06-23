@@ -9,8 +9,6 @@ import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer09;
 import org.apache.flink.streaming.util.serialization.SimpleStringSchema;
 import org.apache.flink.api.common.functions.FlatMapFunction;
-import org.apache.flink.api.java.tuple.Tuple2;
-import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.api.java.tuple.Tuple4;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.util.Collector;
@@ -29,11 +27,6 @@ import org.apache.flink.streaming.connectors.redis.common.config.FlinkJedisPoolC
 import org.apache.flink.streaming.connectors.redis.common.mapper.RedisCommand;
 import org.apache.flink.streaming.connectors.redis.common.mapper.RedisCommandDescription;
 import org.apache.flink.streaming.connectors.redis.common.mapper.RedisMapper;
-import com.typesafe.config.ConfigFactory;
-import com.typesafe.config.Config;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
 import java.io.*;
 import java.util.Iterator;
 import org.json.simple.JSONArray;
@@ -41,7 +34,6 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
-import org.apache.flink.api.java.utils.ParameterTool;
 
 
 
@@ -50,7 +42,7 @@ public class Windows  {
     public static String propertiesFile = "../myjob.properties";
 
     // Some window parameters
-    public static int SPIDERSN  = 8; 
+    public static int SPIDERSN  = 80; 
     public static int TUMBLINGW = 60;
     public static int SESSIONWS = 60;
 
@@ -86,11 +78,6 @@ public class Windows  {
             .timeWindow(Time.seconds(TUMBLINGW))
             .reduce(new MyReducer());
 
-        //The totalcount will perform on a single machine by nature: can be optimized ...
-        DataStream<Tuple4<String, Long, Long, Integer>> totalcount = datain
-            .windowAll(TumblingProcessingTimeWindows.of(Time.seconds(TUMBLINGW)))
-            .sum(3);
-
         // If the number of clicks during the summed window (clickcount) is larger
         SplitStream<Tuple4<String, Long, Long, Integer>> detectspider = clickcount
             .split(new SpiderSelector());
@@ -116,10 +103,12 @@ public class Windows  {
 
         // Sink data to Redis
         clickcount.addSink(new RedisSink<Tuple4<String, Long, Long, Integer>>(redisConf, new ViewerCountMapper()));
-        totalcount.addSink(new RedisSink<Tuple4<String, Long, Long, Integer>>(redisConf, new TotalCountMapper()));
         detectspider
             .select("spider")
             .addSink(new RedisSink<Tuple4<String, Long, Long, Integer>>(redisConf, new SpidersIDMapper()));
+        detectspider
+            .select("spider")
+            .addSink(new RedisSink<Tuple4<String, Long, Long, Integer>>(redisConf, new SpidersSortedMapper()));
         usersession.addSink(new RedisSink<Tuple4<String, Long, Long, Integer>>(redisConf, new EngagementMapper()));
 
 
@@ -198,24 +187,6 @@ public class Windows  {
         }
     }
 
-    public static class TotalCountMapper implements RedisMapper<Tuple4<String, Long, Long, Integer>>{
-
-        @Override
-        public RedisCommandDescription getCommandDescription() {
-            return new RedisCommandDescription(RedisCommand.HSET, "TOTAL_COUNT");
-        }
-
-        @Override
-        public String getKeyFromData(Tuple4<String, Long, Long, Integer> data) {
-            return (String) "totalcount";
-        }
-
-        @Override
-        public String getValueFromData(Tuple4<String, Long, Long, Integer> data) {
-            return data.f3.toString();
-        }
-    }
-
     public static class SpidersIDMapper implements RedisMapper<Tuple4<String, Long, Long, Integer>>{
 
         @Override
@@ -231,6 +202,24 @@ public class Windows  {
         @Override
         public String getValueFromData(Tuple4<String, Long, Long, Integer> data) {
             return (String) "True";
+        }
+    }
+
+    public static class SpidersSortedMapper implements RedisMapper<Tuple4<String, Long, Long, Integer>>{
+
+        @Override
+        public RedisCommandDescription getCommandDescription() {
+            return new RedisCommandDescription(RedisCommand.ZADD, "SORTEDSPIDERS");
+        }
+
+        @Override
+        public String getKeyFromData(Tuple4<String, Long, Long, Integer> data) {
+            return data.f0;
+        }
+
+        @Override
+        public String getValueFromData(Tuple4<String, Long, Long, Integer> data) {
+            return data.f2.toString();
         }
     }
 
