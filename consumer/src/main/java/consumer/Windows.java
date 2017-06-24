@@ -33,6 +33,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.apache.flink.streaming.api.TimeCharacteristic;
 
 
 
@@ -43,13 +44,14 @@ public class Windows  {
 
     // Some window parameters
     public static int SPIDERSN  = 80; 
-    public static int TUMBLINGW = 60;
-    public static int SESSIONWS = 60;
+    public static Long TUMBLINGW = 60L;
+    public static Long SESSIONWS = 60L;
 
     public static void main(String[] args) throws Exception {
 
         // Set up the flink streaming environment
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
+        env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime);
 
         // Reading configureations
         JSONParser parser = new JSONParser();
@@ -68,9 +70,18 @@ public class Windows  {
         FlinkKafkaConsumer09<String> kafkaSource = new FlinkKafkaConsumer09<>(TOPIC, new SimpleStringSchema(), properties);
 
         //Input string to tupleof 4: <ID, Time-in, Time-out, Count>
+        //Adds the watermark: Here approximate that the data from Kafka arrives in ascending order which simplifies the coding.
+        //Consider adding more sophisticated watermark function
         DataStream<Tuple4<String, Long, Long, Integer>> datain = env
             .addSource(kafkaSource)
-            .flatMap(new LineSplitter());
+            .flatMap(new LineSplitter())
+            .assignTimestampsAndWatermarks(new AscendingTimestampExtractor<Tuple4<String, Long, Long, Integer>>() {
+                @Override
+                public long extractAscendingTimestamp(Tuple4<String, Long, Long, Integer> element) {
+                    return element.f1;
+                }
+        });
+
 
         // Calculate the number of clicks during the given period of time
         DataStream<Tuple4<String, Long, Long, Integer>> clickcount = datain
@@ -82,20 +93,10 @@ public class Windows  {
         SplitStream<Tuple4<String, Long, Long, Integer>> detectspider = clickcount
             .split(new SpiderSelector());
 
-        //Adds the watermark: Here I assume that the data from Kafka arrives in ascending order which simplifies the coding.
-        //Consider adding more sophisticated watermark function
-        DataStream<Tuple4<String, Long, Long, Integer>> withTimestampsAndWatermarks =
-            datain.assignTimestampsAndWatermarks(new AscendingTimestampExtractor<Tuple4<String, Long, Long, Integer>>() {
-                @Override
-                public long extractAscendingTimestamp(Tuple4<String, Long, Long, Integer> element) {
-                    return element.f1;
-                }
-        });
-
         // Calculates the sessions...
-        DataStream<Tuple4<String, Long, Long, Integer>> usersession = withTimestampsAndWatermarks
+        DataStream<Tuple4<String, Long, Long, Integer>> usersession = datain
             .keyBy(0)
-            .window(ProcessingTimeSessionWindows.withGap(Time.seconds(SESSIONWS)))
+            .window(EventTimeSessionWindows.withGap(Time.seconds(SESSIONWS)))
             .reduce (new MyReducer());
 
         // Configure the Redis
