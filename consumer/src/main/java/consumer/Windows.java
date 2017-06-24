@@ -82,18 +82,8 @@ public class Windows  {
         SplitStream<Tuple4<String, Long, Long, Integer>> detectspider = clickcount
             .split(new SpiderSelector());
 
-        //Adds the watermark: Here I assume that the data from Kafka arrives in ascending order which simplifies the coding.
-        //Consider adding more sophisticated watermark function
-        DataStream<Tuple4<String, Long, Long, Integer>> withTimestampsAndWatermarks =
-            datain.assignTimestampsAndWatermarks(new AscendingTimestampExtractor<Tuple4<String, Long, Long, Integer>>() {
-                @Override
-                public long extractAscendingTimestamp(Tuple4<String, Long, Long, Integer> element) {
-                    return element.f1;
-                }
-        });
-
         // Calculates the sessions...
-        DataStream<Tuple4<String, Long, Long, Integer>> usersession = withTimestampsAndWatermarks
+        DataStream<Tuple4<String, Long, Long, Integer>> usersession = datain
             .keyBy(0)
             .window(ProcessingTimeSessionWindows.withGap(Time.seconds(SESSIONWS)))
             .reduce (new MyReducer());
