@@ -32,10 +32,19 @@ This program is tested with the followings:
 Installation
 ============
 
-This program has been installed and test locally and on AWS. To run the program locally 
+This program has been installed and test locally and on AWS. After installing all the required packages to run the program locally 
 
 	$FLINK_HOME/bin/start-local.sh 
-
+	
+	$KAFKA_HOME/bin/zookeeper-server-start.sh $KAFKA_HOME/config/zookeeper.properties
+	
+	$KAFKA_HOME/bin/kafka-server-start.sh $KAFKA_HOME/config/server.properties
+	
+	$KAFKA_HOME/bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic topicname
+	
+	$SESSIONIZATION_HOME/consumer/mvn clean package
+	$FLINK_HOME/bin/flink run -c consumer.Windows  $SESSIONIZATION_HOME/consumer/targer/consumer*.jar
+	
 For installing the required packages on AWS please follow [Pegasus Instruction](https://github.com/InsightDataScience/pegasus) 
 
 
