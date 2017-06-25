@@ -23,14 +23,19 @@ Dependency
 ==========
 This program is tested with the followings:
 
+- Python version 2.7
+- Java version 
 - Apache Flink version 1.2.1
 - Apache ZooKeeper version 3.4.9 
 - Apache Kafka version 0.9.0.1
 - Redis version 3.2.6
+- PyKafka
 
 
 Installation
 ============
+
+You can follow the official webpage of each framework for instruction. If you want to test the librdkafka extention of PyKafka, probably, the easiest way to install librdkafka on your Debian based machine would be to follow the instructions presented at [confluent installation](http://docs.confluent.io/current/installation.html)
 
 This program has been installed and test locally and on AWS. After installing all the required packages to run the program locally 
 
