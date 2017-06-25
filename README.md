@@ -5,9 +5,7 @@ Session Spectator
 It is important to track user's actions taken during a time period. This will allow the bussiness owner to observe and analyse the behavior of each website (product) user. 
 
 
-![alt text](https://github.com/amirzainali/sessionization/blob/master/images/pipeline.png)
-
-<img src="https://github.com/amirzainali/sessionization/blob/master/images/pipeline.png" width="200" height="400" />
+<img src="https://github.com/amirzainali/sessionization/blob/master/images/pipeline.png" width="400" />
 
 
 Table of Contents
