@@ -21,7 +21,12 @@ Table of Contents
 
 Dependency
 ==========
+This program is tested with the followings:
 
+- Apache Flink version 1.2.1
+- Apache ZooKeeper version 3.4.9 
+- Apache Kafka version 0.9.0.1
+- Redis version 3.2.6
 
 
 Installation
