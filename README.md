@@ -35,7 +35,7 @@ This program is tested with the followings:
 Installation
 ============
 
-You can follow the official webpage of each framework for instruction. If you want to test the librdkafka extention of PyKafka, probably, the easiest way to install librdkafka on your Debian based machine would be to follow the instructions presented at [confluent installation](http://docs.confluent.io/current/installation.html)
+You can follow the official webpage of each platform for instruction. If you want to test the librdkafka extention of PyKafka, probably, the easiest way to install librdkafka on your Debian based machine would be to follow the instructions presented at [confluent installation](http://docs.confluent.io/current/installation.html)
 
 This program has been installed and test locally and on AWS. After installing all the required packages to run the program locally 
 
