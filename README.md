@@ -2,7 +2,7 @@ Session Spectator
 =================
 ## Track User Behavior Across Dynamic Windows
 
-It is important to track user's actions taken during a time period. This will allow the bussiness owner to observe and analyse the behavior of each website (product) user. 
+In fluid mechanics there exists Lagrangian and Eulerian description of the flow. How is this relevent to the field of data engineering? Imagine we want to track the user activity of a webpage. We can either track their records over sliding/thumbling windows (Eulerian description) or track the activities using dynamically changing session windows (Lagrangian description). Note that using sliding/thubling windows make it more difficult to dig into user's history, while using session windows it is easier to access all the users activity during the past sessions. It is important to track user's actions taken during a time period. This will allow the bussiness owner to observe and analyse the behavior of each website (product) user. 
 
 <p align="center">
 <img align="center" src="https://github.com/amirzainali/sessionization/blob/master/pipeline.png" width="600" />
