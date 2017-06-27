@@ -5,7 +5,11 @@ Session Spectator
 In Lagrangian description of flow we follow the fluid particles in individual level while using Eulerian description we focus on a location rather than individual particle. How is this relevant to the field of Data Engineering? Imagine we want to track the user activity of a web-page. We can either track their visit using sliding/tumbling windows (Eulerian description) or track the activities using dynamically changing session windows (Lagrangian description). A session window is defined as a window that starts when a user visits the page for the first time and continues as long as the user was not idle for more than a specified period. Note that using sliding/tumbling windows, it is more difficult to access user's history. Using session windows makes it easy to find what a user had done during the past sessions. This will allow the business owner to observe and analyze the behavior of each website (product) user, and personalize their product for the specific individual. This is crucial for successful marketing.
 
 <p align="center">
+<<<<<<< HEAD
 <img align="center" src="https://github.com/amirzainali/sessionization/blob/master/images/pipeline.png" width="600" />
+=======
+<img align="center" src="https://github.com/amirzainali/sessionization/blob/master/pipeline.png" width="600" />
+>>>>>>> 33dd90dcf4ea18a9b6bbb5c1dde6e1db68397a8a
 </p>
 
 Table of Contents
