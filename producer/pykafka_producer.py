@@ -10,7 +10,14 @@ import redisdb
 
 redisexpiretime = 60.*2  # move to config file 
 
-def producerf(singlewindow=False, use_rdkafka=False ):
+def producer_f(singlewindow=False, use_rdkafka=False ):
+    """
+    Produces some random log files includeing user ID and timestamp using Kafka
+    Parameters
+    ----------
+    singlewindow: True if you want to test the program
+    use_rdkafka: set it True if you want to ingest more data 
+    """
     tw = 1*60. # The time window in seconds
     nvfv = {'1'   :[0       , int(1e6), int(1e4)], # [0,   1e6): (forgetters)
             '5'   :[int(1e6), int(2e6), int(1e4)], # [1e6, 2e6): (login-logout) 
@@ -26,16 +33,24 @@ def producerf(singlewindow=False, use_rdkafka=False ):
     producer = topic.get_producer(partitioner=hash_partitioner, linger_ms = 200, use_rdkafka=use_rdkafka)
     starttime = 0
     if singlewindow==True:
-        starttime = producef(tw, nvfv, producer, starttime)
+        starttime = produce_f(tw, nvfv, producer, starttime)
         print starttime
     else:
         while True:
-            starttime = producef(tw, nvfv, producer, starttime)
+            starttime = produce_f(tw, nvfv, producer, starttime)
             print starttime
             if (starttime % redisexpiretime) < 2:
                 redisdb.set_expire_time(int(redisexpiretime))
 
-def producef(tw, nvfv, producer, starttime):
+def produce_f(tw, nvfv, producer, starttime):
+    """
+    Parameters
+    ----------
+    tw: time window in seconds
+    nvfv: Input user groups
+    producer: Kafka producer information
+    starttime: start time
+    """
     dtime = 0.
     nv = 0 # Initiate the number of the visits to the website during the time window
     ld = []
@@ -66,6 +81,6 @@ def producef(tw, nvfv, producer, starttime):
 if __name__ == '__main__':
     #process(sys.argv[1:])
     redisdb.flush_all_keys()
-    producerf()
+    producer_f()
     sys.exit(0)
 

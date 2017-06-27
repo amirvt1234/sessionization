@@ -41,7 +41,7 @@ Installation
 
 You can follow the official webpage of each platform for instruction. If you want to test the librdkafka extention of PyKafka, probably, the easiest way to install librdkafka on your Debian based machine would be to follow the instructions presented at [confluent installation](http://docs.confluent.io/current/installation.html)
 
-This program has been installed and test locally and on AWS. After installing all the required packages to run the program locally:
+This program has been installed and test locally and on AWS. After installing all the required packages first make sure to modify myconfigs.json file. To run the program locally:
 
 Start Flink:
 
@@ -71,7 +71,7 @@ Run the producer:
 To communicate with the frontend you need to run 
 
     sudo $SESSIONIZATION_HOME/frontend/run.py
-    python sudo $SESSIONIZATION_HOME/frontend/app/makotemplate.py
+    python $SESSIONIZATION_HOME/frontend/app/makotemplate.py
 	
 For installing the required packages on AWS please follow [Pegasus Instruction](https://github.com/InsightDataScience/pegasus). 
 
