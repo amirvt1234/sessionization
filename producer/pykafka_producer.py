@@ -8,7 +8,7 @@ import json
 sys.path.append("../utils") # fix me!
 import redisdb
 
-redisexpiretime = 60.*7  # move to config file 
+redisexpiretime = 60.*2  # move to config file 
 
 def producerf(singlewindow=False ):
     tw = 1*60. # The time window in seconds
@@ -32,10 +32,8 @@ def producerf(singlewindow=False ):
         while True:
             starttime = producef(tw, nvfv, producer, starttime)
             print starttime
-            #if (starttime % redisexpiretime) < 2:
-            #    redisdb.set_expire_time(int(redisexpiretime))
-            #    print "hi"
-
+            if (starttime % redisexpiretime) < 2:
+                redisdb.set_expire_time(int(redisexpiretime))
 
 def producef(tw, nvfv, producer, starttime):
     dtime = 0.

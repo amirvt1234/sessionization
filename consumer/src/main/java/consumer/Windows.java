@@ -1,25 +1,18 @@
 package consumer;
 
 import java.util.*;
+
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.windowing.WindowFunction;
 import org.apache.flink.streaming.api.windowing.time.Time;
-import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer09;
 import org.apache.flink.streaming.util.serialization.SimpleStringSchema;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.java.tuple.Tuple4;
-import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.util.Collector;
 import org.apache.flink.streaming.api.windowing.assigners.EventTimeSessionWindows;
-import org.apache.flink.streaming.api.windowing.assigners.ProcessingTimeSessionWindows;
-import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
-import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows;
-import org.apache.flink.streaming.api.functions.TimestampExtractor;
 import org.apache.flink.streaming.api.functions.timestamps.AscendingTimestampExtractor;
 import org.apache.flink.api.common.functions.ReduceFunction;
-import org.apache.flink.streaming.api.watermark.Watermark;
 import org.apache.flink.streaming.api.datastream.SplitStream;
 import org.apache.flink.streaming.api.collector.selector.OutputSelector;
 import org.apache.flink.streaming.connectors.redis.RedisSink;
@@ -28,24 +21,18 @@ import org.apache.flink.streaming.connectors.redis.common.mapper.RedisCommand;
 import org.apache.flink.streaming.connectors.redis.common.mapper.RedisCommandDescription;
 import org.apache.flink.streaming.connectors.redis.common.mapper.RedisMapper;
 import java.io.*;
-import java.util.Iterator;
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
 import org.apache.flink.streaming.api.TimeCharacteristic;
-
 
 
 
 public class Windows  {
 
-    public static String propertiesFile = "../myjob.properties";
-
     // Some window parameters
-    public static int SPIDERSN  = 80; 
-    public static Long TUMBLINGW = 60L;
-    public static Long SESSIONWS = 60L;
+    private final static int SPIDERSN  = 80;
+    private final static long TUMBLINGW = 60L;
+    private final static long SESSIONWS = 60L;
 
     public static void main(String[] args) throws Exception {
 
@@ -103,14 +90,14 @@ public class Windows  {
         FlinkJedisPoolConfig redisConf = new FlinkJedisPoolConfig.Builder().setHost(REDISIP).setPort(6379).build();
 
         // Sink data to Redis
-        clickcount.addSink(new RedisSink<Tuple4<String, Long, Long, Integer>>(redisConf, new ViewerCountMapper()));
+        clickcount.addSink(new RedisSink<>(redisConf, new ViewerCountMapper()));
         detectspider
             .select("spider")
-            .addSink(new RedisSink<Tuple4<String, Long, Long, Integer>>(redisConf, new SpidersIDMapper()));
+            .addSink(new RedisSink<>(redisConf, new SpidersIDMapper()));
         detectspider
             .select("spider")
-            .addSink(new RedisSink<Tuple4<String, Long, Long, Integer>>(redisConf, new SpidersSortedMapper()));
-        usersession.addSink(new RedisSink<Tuple4<String, Long, Long, Integer>>(redisConf, new EngagementMapper()));
+            .addSink(new RedisSink<>(redisConf, new SpidersSortedMapper()));
+        usersession.addSink(new RedisSink<>(redisConf, new EngagementMapper()));
 
 
         // Execute the Program 
@@ -138,14 +125,14 @@ public class Windows  {
         @Override
         public void flatMap(String line, Collector<Tuple4<String, Long, Long, Integer>> out) {
             String[] word = line.split(";");
-            out.collect(new Tuple4<String, Long, Long, Integer>(word[0], Long.parseLong(word[1]), Long.parseLong(word[1]), 1));
+            out.collect(new Tuple4<>(word[0], Long.parseLong(word[1]), Long.parseLong(word[1]), 1));
         }
     }
 
     public static class MyReducer implements ReduceFunction< Tuple4<String, Long, Long, Integer>> {
 
         public Tuple4<String, Long, Long, Integer> reduce(Tuple4<String, Long, Long, Integer> value1, Tuple4<String, Long, Long, Integer> value2) {
-            return new Tuple4<String, Long, Long, Integer>(value1.f0, value1.f1, value2.f1, value1.f3+value2.f3);
+            return new Tuple4<>(value1.f0, value1.f1, value2.f1, value1.f3+value2.f3);
         }
     }
 
