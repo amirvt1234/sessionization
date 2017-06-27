@@ -10,7 +10,7 @@ import redisdb
 
 redisexpiretime = 60.*2  # move to config file 
 
-def producerf(singlewindow=False ):
+def producerf(singlewindow=False, use_rdkafka=False ):
     tw = 1*60. # The time window in seconds
     nvfv = {'1'   :[0       , int(1e6), int(1e4)], # [0,   1e6): (forgetters)
             '5'   :[int(1e6), int(2e6), int(1e4)], # [1e6, 2e6): (login-logout) 
@@ -23,7 +23,7 @@ def producerf(singlewindow=False ):
     client   = KafkaClient(hosts=str(myconfigs["WORKERS_IP"]),zookeeper_hosts=str(myconfigs["MASTER_IP"]))
     topic    = client.topics[str(myconfigs["TOPIC"])]
     hash_partitioner = HashingPartitioner()
-    producer = topic.get_producer(partitioner=hash_partitioner, linger_ms = 200)
+    producer = topic.get_producer(partitioner=hash_partitioner, linger_ms = 200, use_rdkafka=use_rdkafka)
     starttime = 0
     if singlewindow==True:
         starttime = producef(tw, nvfv, producer, starttime)
